@@ -975,6 +975,33 @@ describe("ngAnimate", function() {
             expect(element).toBeShown();
         }));
 
+        it("should NOT overwrite styles with outdated values when animation completes",
+          inject(function($animate, $rootScope, $compile, $sniffer, $timeout) {
+
+            var style = '-webkit-transition-duration: 1s, 2000ms, 1s;' +
+                        '-webkit-transition-property: height, left, opacity;' +
+                                'transition-duration: 1s, 2000ms, 1s;' +
+                                 'transition-property: height, left, opacity;';
+
+            ss.addRule('.ng-hide-add', style);
+            ss.addRule('.ng-hide-remove', style);
+
+            element = $compile(html('<div style="width: 100px">foo</div>'))($rootScope);
+            element.addClass('ng-hide');
+
+            $animate.removeClass(element, 'ng-hide');
+
+            if ($sniffer.transitions) {
+              $timeout.flush();
+              var now = Date.now();
+              browserTrigger(element,'transitionend', { timeStamp: now + 1000, elapsedTime: 1 });
+              browserTrigger(element,'transitionend', { timeStamp: now + 1000, elapsedTime: 1 });
+              element.css('width', '200px');
+              browserTrigger(element,'transitionend', { timeStamp: now + 2000, elapsedTime: 2 });
+              expect(element.css('width')).toBe("200px");
+            }
+          }));
+
         it("should animate for the highest duration",
           inject(function($animate, $rootScope, $compile, $sniffer, $timeout) {
             var style = '-webkit-transition:1s linear all 2s;' +
